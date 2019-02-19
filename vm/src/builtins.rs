@@ -152,7 +152,7 @@ fn builtin_compile(vm: &mut VirtualMachine, args: PyFuncArgs) -> PyResult {
 
     compile::compile(&source, &mode, filename, vm.ctx.code_type()).map_err(|err| {
         let syntax_error = vm.context().exceptions.syntax_error.clone();
-        vm.new_exception(syntax_error, err.description().to_string())
+        vm.new_exception(syntax_error, err.to_string())
     })
 }
 
@@ -168,8 +168,7 @@ fn builtin_delattr(vm: &mut VirtualMachine, args: PyFuncArgs) -> PyResult {
 fn builtin_dir(vm: &mut VirtualMachine, args: PyFuncArgs) -> PyResult {
     if args.args.is_empty() {
         Ok(dir_locals(vm))
-    } else {
-        let obj = args.args.into_iter().next().unwrap();
+    } else { let obj = args.args.into_iter().next().unwrap();
         Ok(dir_object(vm, &obj))
     }
 }
@@ -206,7 +205,7 @@ fn builtin_eval(vm: &mut VirtualMachine, args: PyFuncArgs) -> PyResult {
         compile::compile(&source, &mode, "<string>".to_string(), vm.ctx.code_type()).map_err(
             |err| {
                 let syntax_error = vm.context().exceptions.syntax_error.clone();
-                vm.new_exception(syntax_error, err.description().to_string())
+                vm.new_exception(syntax_error, err.to_string())
             },
         )?
     } else {
@@ -241,7 +240,7 @@ fn builtin_exec(vm: &mut VirtualMachine, args: PyFuncArgs) -> PyResult {
         compile::compile(&source, &mode, "<string>".to_string(), vm.ctx.code_type()).map_err(
             |err| {
                 let syntax_error = vm.context().exceptions.syntax_error.clone();
-                vm.new_exception(syntax_error, err.description().to_string())
+                vm.new_exception(syntax_error, err.to_string())
             },
         )?
     } else if objtype::isinstance(source, &vm.ctx.code_type()) {

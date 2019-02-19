@@ -26,9 +26,9 @@ fn import_uncached_module(
 
     // Time to search for module in any place:
     let file_path = find_source(vm, current_path, module)
-        .map_err(|e| vm.new_exception(notfound_error.clone(), e))?;
+        .map_err(|e| vm.new_exception(notfound_error.clone(), e.to_string()))?;
     let source = util::read_file(file_path.as_path())
-        .map_err(|e| vm.new_exception(import_error.clone(), e.description().to_string()))?;
+        .map_err(|e| vm.new_exception(import_error.clone(), e.to_string()))?;
     let code_obj = compile::compile(
         &source,
         &compile::Mode::Exec,
@@ -37,7 +37,7 @@ fn import_uncached_module(
     )
     .map_err(|err| {
         let syntax_error = vm.context().exceptions.syntax_error.clone();
-        vm.new_exception(syntax_error, err.description().to_string())
+        vm.new_exception(syntax_error, err.to_string())
     })?;
     // trace!("Code object: {:?}", code_obj);
 

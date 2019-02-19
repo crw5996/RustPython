@@ -16,6 +16,7 @@ struct Compiler {
     nxt_label: usize,
     source_path: Option<String>,
     current_source_location: ast::Location,
+    loop_context: bool,
 }
 
 /// Compile a given sourcecode into a bytecode object.
@@ -73,6 +74,7 @@ impl Compiler {
             nxt_label: 0,
             source_path: None,
             current_source_location: ast::Location::default(),
+            loop_context: false,
         }
     }
 
@@ -229,7 +231,11 @@ impl Compiler {
                 self.set_label(start_label);
 
                 self.compile_test(test, None, Some(else_label), EvalContext::Statement)?;
+
+                self.loop_context = true;
                 self.compile_statements(body)?;
+                self.loop_context = false;
+
                 self.emit(Instruction::Jump {
                     target: start_label,
                 });
@@ -239,6 +245,9 @@ impl Compiler {
                     self.compile_statements(orelse)?;
                 }
                 self.set_label(end_label);
+
+                self.emit(Instruction::PopBlock);
+
             }
             ast::Statement::With { items, body } => {
                 let end_label = self.new_label();
@@ -290,8 +299,10 @@ impl Compiler {
                 // Start of loop iteration, set targets:
                 self.compile_store(target)?;
 
-                // Body of loop:
+                // Body of loop
+                self.loop_context = true;
                 self.compile_statements(body)?;
+                self.loop_context = false;
                 self.emit(Instruction::Jump {
                     target: start_label,
                 });
@@ -564,9 +575,17 @@ impl Compiler {
                 self.set_label(end_label);
             }
             ast::Statement::Break => {
+
+                if !self.loop_context {
+                    return Err(CompileError::SyntaxErr(String::from("break")));
+                }
                 self.emit(Instruction::Break);
             }
             ast::Statement::Continue => {
+
+                if !self.loop_context {
+                    return Err(CompileError::SyntaxErr(String::from("continue")));
+                }
                 self.emit(Instruction::Continue);
             }
             ast::Statement::Return { value } => {
@@ -1250,7 +1269,7 @@ impl Compiler {
 
         match kind {
             ast::ComprehensionKind::GeneratorExpression { element } => {
-                self.compile_expression(element)?;
+                self.compile_expression(element);
                 self.mark_generator();
                 self.emit(Instruction::YieldValue);
                 self.emit(Instruction::Pop);

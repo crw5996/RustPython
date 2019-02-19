@@ -15,6 +15,8 @@ pub enum CompileError {
     Parse(ParseError),
     // Multiple `*` detected
     StarArgs,
+    // Syntax Error undetectable by parser
+    SyntaxErr(String),
 }
 
 impl fmt::Display for CompileError {
@@ -25,6 +27,7 @@ impl fmt::Display for CompileError {
             CompileError::ExpectExpr => write!(f, "Expecting expression, got statement"),
             CompileError::Parse(err) => err.fmt(f),
             CompileError::StarArgs => write!(f, "Two starred expressions in assignment"),
+            CompileError::SyntaxErr(expr) => write!(f, "'{}' outside loop", expr),
         }
     }
 }
